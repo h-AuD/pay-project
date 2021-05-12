@@ -1,7 +1,14 @@
 package AuD.wechat.pay.core.util;
 
+import AuD.wechat.pay.core.constant.SignatureAuthConstant;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -29,6 +36,14 @@ import java.util.Optional;
 @Slf4j
 public class WeChatPayUtils {
 
+    /**======================================== 签名相关内容 ===================================
+     * 1.{@link WeChatPayUtils#sign(java.lang.String, java.lang.String)}
+     * - 签名方法,将message内容进行签名运算,并加以base64编码
+     *
+     * 3.{@link WeChatPayUtils#getPrivateKey(java.lang.String)}
+     * - 获取商户证书的私钥
+     *
+     *=======================================================================================*/
 
     /**
      * 封装了计算签名逻辑,使用密钥计算待签名的文本内容
@@ -54,14 +69,14 @@ public class WeChatPayUtils {
 
     /**
      *
-     * @param certPath
+     * @param certIn
      * @param message
      * @param signature
      * @return
      */
-    public static boolean verifySign(String certPath, String message, String signature) {
+    public static boolean verifySign(InputStream certIn, String message, String signature) {
         boolean result = false;
-        final X509Certificate certificate = loadCertificate(certPath).get();
+        final X509Certificate certificate = loadCertificate(certIn).get();
         try {
             Signature sign = Signature.getInstance("SHA256withRSA");
             sign.initVerify(certificate);
@@ -75,7 +90,7 @@ public class WeChatPayUtils {
 
     /**
      * 获取私钥。
-     *
+     * -- 用于API签名和敏感数据加密
      * @param privateKeyPath 私钥文件路径  (required)
      * @return 私钥对象
      */
@@ -96,20 +111,50 @@ public class WeChatPayUtils {
     }
 
     /**
-     * 加载平台证书   // TODO 存在问题:平台证书需要定期更换,并且通过API获取证书列表,使用certPath不合适
-     * @param certPath
+     * 加载平台证书
+     * @param certIn
      * @return
      */
-    private static Optional<X509Certificate> loadCertificate(String certPath) {
+    private static Optional<X509Certificate> loadCertificate(InputStream certIn) {
         X509Certificate cert = null;
-        try(InputStream inputStream = new FileInputStream(certPath)) {
+        try {
             CertificateFactory cf = CertificateFactory.getInstance("X509");
-            cert = (X509Certificate) cf.generateCertificate(inputStream);
+            cert = (X509Certificate) cf.generateCertificate(certIn);
             cert.checkValidity();
-        } catch (CertificateException | IOException e) {
+        } catch (CertificateException e) {
             log.error("load certificate fail,error-info is:{}",e.getMessage());
         }
         return Optional.ofNullable(cert);
+    }
+
+    /*======================================== 分割线 ===================================*/
+
+    /**==============================================================================
+     *
+     *===============================================================================*/
+
+    /**
+     * 解密平台证书文本内容 & 回调报文
+     * - call-API(下载证书)返回的数据(resultData) 包含加密数据,解密cert内容需要使用到 APIkey(商户自行设置的)
+     * - 参数都来自resultData
+     * @param associatedData
+     * @param nonce
+     * @param ciphertext
+     * @return
+     */
+    public String decryptCertContent(String associatedData, String nonce, String ciphertext){
+        String result = null;
+        try {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            SecretKeySpec key = new SecretKeySpec(SignatureAuthConstant.WC_API_KEY.getBytes(), "AES");
+            GCMParameterSpec spec = new GCMParameterSpec(SignatureAuthConstant.TAG_LENGTH_BIT, nonce.getBytes());
+            cipher.init(Cipher.DECRYPT_MODE, key, spec);
+            cipher.updateAAD(associatedData.getBytes());
+            result = new String(cipher.doFinal(Base64.getDecoder().decode(ciphertext)), "utf-8");
+        } catch (Exception e) {
+
+        }
+        return result;
     }
 
 }

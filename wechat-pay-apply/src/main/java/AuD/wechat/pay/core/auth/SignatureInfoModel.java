@@ -24,7 +24,7 @@ public class SignatureInfoModel {
     /** 请求的URI,eg.请求路径为 "www.xxx.com/abc/?a=v" 则URI=/abc/?a=v */
     private String requestUri;
     /** 发送请求的时间戳,单位秒 */
-    private String timestamp;
+    private long timestamp;
     /** 随机字符串 === 使用随机算法生成 */
     private String nonceStr;
     /** 请求体内容,GET请求为null */
@@ -57,7 +57,7 @@ public class SignatureInfoModel {
         signatureInfoModel.setMchId(mchId)
                 .setSerialNo(serialNo)
                 .setNonceStr(RandomStrUtil.ofStr(SignatureAuthConstant.RANDOM_LEN))
-                .setTimestamp((System.currentTimeMillis()/1000)+"");
+                .setTimestamp((System.currentTimeMillis()/1000));
         return signatureInfoModel;
     }
 

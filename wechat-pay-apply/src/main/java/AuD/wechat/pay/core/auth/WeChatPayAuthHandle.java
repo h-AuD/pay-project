@@ -4,6 +4,8 @@ import AuD.wechat.pay.core.util.WeChatPayUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
+import java.io.InputStream;
+
 /**
  * Description: 调用微信支付API时,所需要的认证相关操作。
  * 1.计算签名signature
@@ -47,15 +49,15 @@ public class WeChatPayAuthHandle {
     /**
      * 验证微信端回调请求签名
      * @param signatureInfoModel
-     * @param certPath
+     * @param certIn
      * @return
      */
-    public static boolean verifyWeChatResponse(SignatureInfoModel signatureInfoModel,String certPath){
+    public static boolean verifyWeChatResponse(SignatureInfoModel signatureInfoModel, InputStream certIn){
         String respSignature = signatureInfoModel.getSignature();
         if(StringUtils.hasText(respSignature)){
             return false;
         }
-        return WeChatPayUtils.verifySign(certPath,evalRespSignature(signatureInfoModel),respSignature);
+        return WeChatPayUtils.verifySign(certIn,evalRespSignature(signatureInfoModel),respSignature);
     }
 
     /**
