@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <modules>
+        <module>wechat-pay-apply</module>
+    </modules>
+
+    <!--
+        springboot版本选择:
+        若是learn,可大胆使用最新版本
+        若是工作,则优先以team为主,其次可以参考https://mvnrepository.com/中的用户量,推荐使用RELEASE版本
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.4.5</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>AuD.pay.project</groupId>
+    <artifactId>pay-parent</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0.0</version>
+
+    <description>支付项目</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- 指定编译版本,maven默认1.5 -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <mybatis.spring.boot.start.varsion>2.1.4</mybatis.spring.boot.start.varsion>
+        <commons.function.version>1.0.0</commons.function.version>
+        <lombok.version>1.18.20</lombok.version>
+        <spring.cloud.eureka.client.version>3.0.2</spring.cloud.eureka.client.version>
+        <spring.cloud.eureka.server.version>3.0.2</spring.cloud.eureka.server.version>
+        <google.guava.vaersion>30.1-jre</google.guava.vaersion>
+        <forest.version>1.5.0</forest.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis.spring.boot.start.varsion}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>AuD.component</groupId>
+                <artifactId>commons-function</artifactId>
+                <version>${commons.function.version}</version>
+            </dependency>
+
+            <!-- 一个封装了HTTP调用的框架:https://gitee.com/dromara/forest -->
+            <dependency>
+                <groupId>com.dtflys.forest</groupId>
+                <artifactId>forest-spring-boot-starter</artifactId>
+                <version>${forest.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${google.guava.vaersion}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+
+            <!-- eureka-client -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+                <version>${spring.cloud.eureka.client.version}</version>
+            </dependency>
+            <!-- eureka-server -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+                <version>${spring.cloud.eureka.server.version}</version>
+            </dependency>
+
+            <!-- 导入spring-cloud-dependencies依赖,包含上述的 eureka-client & eureka-server -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2020.0.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+
+    <build>
+        <!-- 插件管理 -->
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+
+
+    <repositories>
+        <repository>
+            <id>aliyun</id>
+            <name>aliyun</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+        </repository>
+    </repositories>
+
+
+</project>
