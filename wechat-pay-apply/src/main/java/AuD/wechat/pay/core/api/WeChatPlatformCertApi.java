@@ -41,7 +41,7 @@ public interface WeChatPlatformCertApi {
         private EncryptCertificate encryptCertificate;
     }
 
-    /** 不仅仅是平台证书内容,也是回调报文的内容 */
+    /** TODO 注意:不仅仅是平台证书内容,也是回调报文的内容 */
     @Data
     public class EncryptCertificate{
         //
