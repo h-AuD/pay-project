@@ -119,7 +119,7 @@ public class WeChatPayUtils {
      * @param certIn    平台证书的输入流,推荐使用ByteArrayInputStream
      * @return
      */
-    public static Optional<X509Certificate> loadCertificate(InputStream certIn) {
+    public static X509Certificate loadCertificate(InputStream certIn) {
         X509Certificate cert = null;
         try {
             CertificateFactory cf = CertificateFactory.getInstance("X509");
@@ -128,7 +128,7 @@ public class WeChatPayUtils {
         } catch (CertificateException e) {
             log.error("load certificate fail,error-info is:{}",e.getMessage());
         }
-        return Optional.ofNullable(cert);
+        return cert;
     }
 
     /*======================================== 分割线 ===================================*/
