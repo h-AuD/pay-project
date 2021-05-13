@@ -47,9 +47,8 @@ public class SignatureInfoModel {
 
     /**
      * mchId & serialNo 属于常量,传入这2个参数,仅仅为了方便构建API请求体的认证信息
-     * 即,若想要构建Authorization信息,使用如下方式:
-     * WeChatPayAuthHandle.buildAuthorization(SignatureInfoModel.of(mchId,serialNo),filePath)
-     * {@link WeChatPayAuthHandle#buildAuthorization(AuD.wechat.pay.core.function.auth.SignatureInfoModel, java.lang.String)}
+     * 即,若想要构建Authorization信息,使用 {@link WeChatPayAuthHandle#buildAuthorization(AuD.wechat.pay.core.function.auth.SignatureInfoModel, java.security.PrivateKey)}
+     *
      * @return
      */
     public static SignatureInfoModel of(String mchId,String serialNo,String requestMethod){

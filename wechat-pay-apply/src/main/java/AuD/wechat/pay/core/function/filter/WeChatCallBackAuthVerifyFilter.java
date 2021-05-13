@@ -39,7 +39,10 @@ public class WeChatCallBackAuthVerifyFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         final String serial = request.getHeader(SignatureAuthConstant.WCP_SERIAL);
-        // TODO 验证证书序列号 ===
+        // 商户是否拥有该证书   TODO 待续.... 遗留问题:并发情况如何处理?eg.多个回调 & 幂等性
+        if(!certInfo.isExistKey(serial)){
+            //certInfo.flushCert();
+        }
         final boolean verify = WeChatPayAuthHandle.verifyWeChatResponse(buildParam(request),null);
         if(verify){
             filterChain.doFilter(request,response);

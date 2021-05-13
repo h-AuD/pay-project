@@ -1,13 +1,10 @@
 package AuD.wechat.pay.core.util;
 
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
-import AuD.wechat.pay.core.constant.WeChatPayDataModel;
+import AuD.wechat.pay.core.model.EncryptData;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
@@ -18,10 +15,8 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import java.util.Optional;
 
 /**
  * 提供如下function:
@@ -97,7 +92,7 @@ public class WeChatPayUtils {
      * @param privateKeyPath 私钥文件路径  (required)
      * @return 私钥对象
      */
-    public static Optional<PrivateKey> getPrivateKey(String privateKeyPath){
+    public static PrivateKey getPrivateKey(String privateKeyPath){
         PrivateKey privateKey = null;
         try {
             String content = new String(Files.readAllBytes(Paths.get(privateKeyPath)), "utf-8");
@@ -110,7 +105,7 @@ public class WeChatPayUtils {
         } catch (Exception e) {
             log.error("generation privateKey fail,error-info is:{}",e.getMessage());
         }
-        return Optional.ofNullable(privateKey);
+        return privateKey;
     }
 
     /**
@@ -143,7 +138,7 @@ public class WeChatPayUtils {
      * - 参数都来自resultData
      * @return
      */
-    public static String decryptCertAndCallBody(WeChatPayDataModel.EncryptData encryptData){
+    public static String decryptCertAndCallBody(EncryptData encryptData){
         String result = null;
         try {
             String associatedData = encryptData.getAssociatedData();
@@ -162,6 +157,7 @@ public class WeChatPayUtils {
     }
 
     /**
+     * 加密敏感数据,使用的是平台证书公钥
      *
      * @param message
      * @return
@@ -180,6 +176,12 @@ public class WeChatPayUtils {
         return result==null? "" : result;
     }
 
+    /**
+     * 解密敏感信息,使用商户API证书密钥
+     * @param ciphertext
+     * @param privateKey
+     * @return
+     */
     public static String decryptOAEP(String ciphertext, PrivateKey privateKey){
         String result = null;
         try {

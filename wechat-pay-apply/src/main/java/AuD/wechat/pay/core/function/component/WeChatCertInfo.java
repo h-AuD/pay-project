@@ -56,10 +56,14 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
         return platformCert.get(serialNo);
     }
 
+    public void flushCert(){
+        this.platformCert = flushPlatformCert.flushCert();
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
-        final Optional<PrivateKey> optional = WeChatPayUtils.getPrivateKey(SignatureAuthConstant.PRIVATE_KEY_PATH);
-        if(!optional.isPresent()){
+        final PrivateKey privateKey = WeChatPayUtils.getPrivateKey(SignatureAuthConstant.PRIVATE_KEY_PATH);
+        if(privateKey==null){
             log.error("商户API证书密钥获取失败,应用退出");
             SpringApplication.exit(applicationContext); // 应用退出
         }

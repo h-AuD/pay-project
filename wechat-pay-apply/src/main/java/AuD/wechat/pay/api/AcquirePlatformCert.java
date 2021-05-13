@@ -1,8 +1,11 @@
 package AuD.wechat.pay.api;
 
 import AuD.wechat.pay.core.constant.WeChatPayApiList;
-import AuD.wechat.pay.core.constant.WeChatPayDataModel;
+import AuD.wechat.pay.core.model.PlatformCertData;
 import com.dtflys.forest.annotation.Get;
+import lombok.Data;
+
+import java.util.List;
 
 /**
  * Description: TODO
@@ -15,7 +18,13 @@ import com.dtflys.forest.annotation.Get;
 public interface AcquirePlatformCert {
 
     @Get(url = WeChatPayApiList.PCL,headers = {"Accept: application/json","Authorization:${authMsg}"})
-    public WeChatPayDataModel.ResultDataFromCertApi getCertList(String authMsg);
+    public ResultDataFromCertApi getCertList(String authMsg);
+
+    /** 以下是获取平台证书返回的数据结构 */
+    @Data
+    public class ResultDataFromCertApi{
+        private List<PlatformCertData> data;
+    }
 
 
 /* data-demo:
