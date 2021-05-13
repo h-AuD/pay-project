@@ -1,5 +1,6 @@
 package AuD.wechat.pay.controller;
 
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -11,5 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
  * @Version 1.0
  */
 @RestController
+@RequestMapping
 public class XxxController {
 }

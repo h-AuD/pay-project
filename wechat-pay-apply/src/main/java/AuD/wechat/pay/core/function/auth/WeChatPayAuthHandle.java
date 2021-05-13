@@ -1,19 +1,20 @@
-package AuD.wechat.pay.core.auth;
+package AuD.wechat.pay.core.function.auth;
 
 import AuD.wechat.pay.core.util.WeChatPayUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
-import java.io.InputStream;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 
 /**
  * Description: 调用微信支付API时,所需要的认证相关操作。
- * 1.计算签名signature
- * - {@link WeChatPayAuthHandle#evalReqSignature(AuD.wechat.pay.core.auth.SignatureInfoModel, java.lang.String)}
- * -- 构造签名串
- * - {@link WeChatPayAuthHandle#buildAuthorization(AuD.wechat.pay.core.auth.SignatureInfoModel, java.lang.String)}
- * -- 构建请求头中的签名信息
- * - {@link WeChatPayAuthHandle#verifyWeChatResponse(AuD.wechat.pay.core.auth.SignatureInfoModel, java.lang.String) }
+ * 1.签名 - signature
+ * - 构造签名串
+ * {@link WeChatPayAuthHandle#evalReqSignature(AuD.wechat.pay.core.function.auth.SignatureInfoModel, java.security.PrivateKey)}
+ * - 构建请求头中的签名信息
+ * {@link WeChatPayAuthHandle#buildAuthorization(AuD.wechat.pay.core.function.auth.SignatureInfoModel, java.security.PrivateKey)}
+ * -
  * -- 验证微信端应答签名
  * @author AuD/胡钊
  * @ClassName WeChatPayAuthHandle
@@ -34,30 +35,31 @@ public class WeChatPayAuthHandle {
 
     /**
      * 构建请求头中的签名信息
-     * 形如:
-     * Authorization: WECHATPAY2-SHA256-RSA2048 mchid="xx",nonce_str="xx",signature="xx",timestamp="xx",serial_no="xx"
-     * 注:以上五项签名信息,无顺序要求
+     * 形如:(属性名 - Authorization)
+     * WECHATPAY2-SHA256-RSA2048 mchid="xx",nonce_str="xx",signature="xx",timestamp="xx",serial_no="xx"
+     * 注:以上五项签名信息,无顺序要求,nonce_str,timestamp是参与签名的随机字符串和时间戳
+     *
      * @param signatureInfoModel
-     * @param privateKeyPath
+     * @param privateKey
      * @return
      */
-    public static String buildAuthorization(SignatureInfoModel signatureInfoModel,String privateKeyPath){
-        evalReqSignature(signatureInfoModel,privateKeyPath);
+    public static String buildAuthorization(SignatureInfoModel signatureInfoModel,PrivateKey privateKey){
+        evalReqSignature(signatureInfoModel,privateKey);
         return AUTH_TYPE+"  "+signatureInfoModel.buildSignatureAuth();
     }
 
     /**
      * 验证微信端回调请求签名
      * @param signatureInfoModel
-     * @param certIn
+     * @param certificate
      * @return
      */
-    public static boolean verifyWeChatResponse(SignatureInfoModel signatureInfoModel, InputStream certIn){
+    public static boolean verifyWeChatResponse(SignatureInfoModel signatureInfoModel, X509Certificate certificate){
         String respSignature = signatureInfoModel.getSignature();
         if(StringUtils.hasText(respSignature)){
             return false;
         }
-        return WeChatPayUtils.verifySign(certIn,evalRespSignature(signatureInfoModel),respSignature);
+        return WeChatPayUtils.verifySign(certificate,evalRespSignature(signatureInfoModel),respSignature);
     }
 
     /**
@@ -75,17 +77,17 @@ public class WeChatPayAuthHandle {
      * 593BEC0C930BF1AFEB40B4A08C8FB242\n
      * \n
      * @param signatureInfoModel
-     * @param privateKeyPath    - 商户证书的路径
+     * @param privateKey    - 商户API证书密钥
      * @return
      */
-    public static String evalReqSignature(SignatureInfoModel signatureInfoModel, String privateKeyPath){
+    private static String evalReqSignature(SignatureInfoModel signatureInfoModel,PrivateKey privateKey){
         String signatureMessage = signatureInfoModel.getRequestMethod() + NEW_LINE
                 + signatureInfoModel.getRequestUri() + NEW_LINE
                 + signatureInfoModel.getTimestamp() + NEW_LINE
                 + signatureInfoModel.getNonceStr() + NEW_LINE;
         final String body = signatureInfoModel.getBody();
         signatureMessage = StringUtils.hasText(body) ? (signatureMessage + body + NEW_LINE) : (signatureMessage+ NEW_LINE);
-        final String signature = WeChatPayUtils.sign(signatureMessage, privateKeyPath).get();
+        final String signature = WeChatPayUtils.sign(signatureMessage, privateKey);
         signatureInfoModel.setSignature(signature);
         return signature;
     }
@@ -96,7 +98,7 @@ public class WeChatPayAuthHandle {
      * @param signatureInfoModel
      * @return
      */
-    public static String evalRespSignature(SignatureInfoModel signatureInfoModel){
+    private static String evalRespSignature(SignatureInfoModel signatureInfoModel){
         String signatureMessage = signatureInfoModel.getTimestamp() + NEW_LINE
                 + signatureInfoModel.getNonceStr() + NEW_LINE;
         final String body = signatureInfoModel.getBody();

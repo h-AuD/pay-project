@@ -1,6 +1,7 @@
 package AuD.wechat.pay.core.util;
 
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
+import AuD.wechat.pay.core.constant.WeChatPayDataModel;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
@@ -10,6 +11,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
@@ -27,6 +29,8 @@ import java.util.Optional;
  * 2.签名 & 验证
  * 3.平台证书解密
  * 4.敏感信息加解密
+ * -----------------------------
+ * ps:{@link WeChatPayUtils}中function参考自微信方提供的SDK
  *
  * @author AuD/胡钊
  * @ClassName WeChatPayUtils
@@ -46,37 +50,36 @@ public class WeChatPayUtils {
      *=======================================================================================*/
 
     /**
-     * 封装了计算签名逻辑,使用密钥计算待签名的文本内容
-     *
+     * 计算签名 === 使用商户API证书密钥计算待签名的文本内容
+     * - 注:签名和验签使用的密钥是不一样的.分别是商户API证书中的私钥,平台证书中的公钥.
      * @param message   带签名的信息内容
-     * @param privateKeyPath  密钥文件路径(使用绝对路径)
-     *                  -- 注:请求签名和验证签名使用的密钥是不一样的.分别是商户证书中的私钥,平台证书中的公钥.
+     * @param privateKey  商户API证书密钥
      * @return
      */
-    public static Optional<String> sign(String message,String privateKeyPath) {
+    public static String sign(String message,PrivateKey privateKey) {
         String signature = null;
         try {
             Signature sign = Signature.getInstance("SHA256withRSA");
-            sign.initSign(getPrivateKey(privateKeyPath).get());
+            sign.initSign(privateKey);
             sign.update(message.getBytes());
             // Base64编码
             signature = Base64.getEncoder().encodeToString(sign.sign());
-        } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException | IOException e) {
+        } catch (Exception e) {
             log.error("signature fail,error-info is:{}",e.getMessage());
         }
-        return Optional.ofNullable(signature);
+        return signature==null? "" : signature;
     }
 
     /**
+     * 验证微信支付(即WeChat发送的请求)中的签名信息,使用的是微信平台证书
      *
-     * @param certIn
-     * @param message
-     * @param signature
+     * @param certificate   平台证书
+     * @param message   需要签名的信息,由三部分组成:应答时间戳、应答随机串、应答报文主体
+     * @param signature 待验证的签名信息
      * @return
      */
-    public static boolean verifySign(InputStream certIn, String message, String signature) {
+    public static boolean verifySign(X509Certificate certificate, String message, String signature) {
         boolean result = false;
-        final X509Certificate certificate = loadCertificate(certIn).get();
         try {
             Signature sign = Signature.getInstance("SHA256withRSA");
             sign.initVerify(certificate);
@@ -89,22 +92,22 @@ public class WeChatPayUtils {
     }
 
     /**
-     * 获取私钥。
+     * 获取商户证书的私钥。
      * -- 用于API签名和敏感数据加密
      * @param privateKeyPath 私钥文件路径  (required)
      * @return 私钥对象
      */
-    private static Optional<PrivateKey> getPrivateKey(String privateKeyPath) throws IOException {
+    public static Optional<PrivateKey> getPrivateKey(String privateKeyPath){
         PrivateKey privateKey = null;
-        String content = new String(Files.readAllBytes(Paths.get(privateKeyPath)), "utf-8");
         try {
+            String content = new String(Files.readAllBytes(Paths.get(privateKeyPath)), "utf-8");
             String privateKeyContent = content.replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s+", "");
 
             KeyFactory kf = KeyFactory.getInstance("RSA");
             privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyContent)));
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (Exception e) {
             log.error("generation privateKey fail,error-info is:{}",e.getMessage());
         }
         return Optional.ofNullable(privateKey);
@@ -112,10 +115,11 @@ public class WeChatPayUtils {
 
     /**
      * 加载平台证书
-     * @param certIn
+     *
+     * @param certIn    平台证书的输入流,推荐使用ByteArrayInputStream
      * @return
      */
-    private static Optional<X509Certificate> loadCertificate(InputStream certIn) {
+    public static Optional<X509Certificate> loadCertificate(InputStream certIn) {
         X509Certificate cert = null;
         try {
             CertificateFactory cf = CertificateFactory.getInstance("X509");
@@ -137,14 +141,14 @@ public class WeChatPayUtils {
      * 解密平台证书文本内容 & 回调报文
      * - call-API(下载证书)返回的数据(resultData) 包含加密数据,解密cert内容需要使用到 APIkey(商户自行设置的)
      * - 参数都来自resultData
-     * @param associatedData
-     * @param nonce
-     * @param ciphertext
      * @return
      */
-    public String decryptCertContent(String associatedData, String nonce, String ciphertext){
+    public static String decryptCertAndCallBody(WeChatPayDataModel.EncryptData encryptData){
         String result = null;
         try {
+            String associatedData = encryptData.getAssociatedData();
+            String nonce = encryptData.getNonce();
+            String ciphertext = encryptData.getCiphertext();
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             SecretKeySpec key = new SecretKeySpec(SignatureAuthConstant.WC_API_KEY.getBytes(), "AES");
             GCMParameterSpec spec = new GCMParameterSpec(SignatureAuthConstant.TAG_LENGTH_BIT, nonce.getBytes());
@@ -154,7 +158,39 @@ public class WeChatPayUtils {
         } catch (Exception e) {
 
         }
-        return result;
+        return result==null? "" : result;
+    }
+
+    /**
+     *
+     * @param message
+     * @return
+     */
+    public static String encryptOAEP(String message,X509Certificate certificate) {
+        String result = null;
+        try {
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, certificate.getPublicKey());
+            byte[] data = message.getBytes(StandardCharsets.UTF_8);
+            byte[] ciphertext = cipher.doFinal(data);
+            result = Base64.getEncoder().encodeToString(ciphertext);
+        } catch (Exception e) {
+
+        }
+        return result==null? "" : result;
+    }
+
+    public static String decryptOAEP(String ciphertext, PrivateKey privateKey){
+        String result = null;
+        try {
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            byte[] data = Base64.getDecoder().decode(ciphertext);
+            result = new String(cipher.doFinal(data), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+
+        }
+        return result==null? "" : result;
     }
 
 }

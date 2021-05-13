@@ -1,8 +1,10 @@
-package AuD.wechat.pay.core.filter;
+package AuD.wechat.pay.core.function.filter;
 
-import AuD.wechat.pay.core.auth.SignatureInfoModel;
-import AuD.wechat.pay.core.auth.WeChatPayAuthHandle;
+import AuD.wechat.pay.core.function.auth.SignatureInfoModel;
+import AuD.wechat.pay.core.function.auth.WeChatPayAuthHandle;
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
+import AuD.wechat.pay.core.function.component.WeChatCertInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,7 +26,10 @@ import java.io.IOException;
 @Component
 public class WeChatCallBackAuthVerifyFilter extends OncePerRequestFilter {
 
-    /** 设置需要拦截的请求 */
+    @Autowired
+    private WeChatCertInfo certInfo;
+
+    /** 设置需要拦截的请求,目前设置拦截回调接口(i.e,this app api) */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         return super.shouldNotFilter(request);
@@ -54,7 +59,10 @@ public class WeChatCallBackAuthVerifyFilter extends OncePerRequestFilter {
             final long timestamp = Long.parseLong(request.getHeader(SignatureAuthConstant.WCP_TIMESTAMP));  // 这里可能会发生异常,转换异常
             final String nonce = request.getHeader(SignatureAuthConstant.WCP_NONCE);
             final String signature = request.getHeader(SignatureAuthConstant.WCP_SIGNATURE);
-            signatureInfoModel.setTimestamp(timestamp).setNonceStr(nonce).setSignature(signature).setBody(stringBuilder.toString());
+            signatureInfoModel.setTimestamp(timestamp)
+                    .setNonceStr(nonce)
+                    .setSignature(signature)
+                    .setBody(stringBuilder.toString());
         }catch (Exception e){
             logger.error("error appear in processing of handle request header,info:{}",e);
         }

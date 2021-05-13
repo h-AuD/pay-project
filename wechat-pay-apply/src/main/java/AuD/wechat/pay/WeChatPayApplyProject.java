@@ -15,7 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @SpringBootApplication
 @MapperScan(value = "AuD.wechat.pay.mapper")
-@ForestScan(basePackages = "AuD.wechat.pay.core.api")
+@ForestScan(basePackages = "AuD.wechat.pay.api")
 public class WeChatPayApplyProject {
     public static void main(String[] args) {
         SpringApplication.run(WeChatPayApplyProject.class,args);

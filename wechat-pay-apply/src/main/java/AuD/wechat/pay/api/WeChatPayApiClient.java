@@ -1,4 +1,4 @@
-package AuD.wechat.pay.core.api;
+package AuD.wechat.pay.api;
 
 /**
  * Description: TODO

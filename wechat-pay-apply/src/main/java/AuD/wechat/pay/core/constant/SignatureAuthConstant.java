@@ -21,6 +21,10 @@ public interface SignatureAuthConstant {
     /** 商户证书序列号 */
     String PRIVATE_SERIAL_NO = "";
 
+    /*================请求方式===============*/
+    String GET = "GET";
+    String POST = "POST";
+
     /* ============= 以下是微信端请求头属性 =============== */
     String WCP_TIMESTAMP = "Wechatpay-Timestamp";
     String WCP_NONCE = "Wechatpay-Nonce";
