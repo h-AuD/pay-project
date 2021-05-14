@@ -1,5 +1,7 @@
 package AuD.wechat.pay.controller;
 
+import AuD.wechat.pay.core.function.model.CallBackSuccess;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,4 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping
 public class WeChatPayCallBackController {
+
+
+    @PostMapping("/back/pay")
+    public CallBackSuccess callBack(){
+        // TODO 处理微信支付回调逻辑
+        return CallBackSuccess.ofSuc();
+    }
+
 }

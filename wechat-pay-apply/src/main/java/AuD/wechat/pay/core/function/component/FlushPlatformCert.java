@@ -50,23 +50,25 @@ public class FlushPlatformCert {
         final AcquirePlatformCert.ResultDataFromCertApi resultData = platformCertList.getCertList(WeChatPaySignatureHandle.buildAuthorization(signatureInfoModel,certInfo.getApiPrivateKey()));
         Map<String, X509Certificate> platformCert = certInfo.getPlatformCert();
         final List<PlatformCertData> certDataList = resultData.getData();
-        certDataList.stream().sorted((o1,o2)->{
-            int res = o1.getEffectiveTime().isAfter(o2.getEffectiveTime()) ? -1:1;
-            return res;
-        }).forEach((certData -> {
+        certDataList.forEach((certData)->{
             final String certContextData = WeChatPayUtils.decryptCertAndCallBody(certData.getEncryptCertificate());
             X509Certificate certificate = null;
-            boolean flag = true;
             if(StringUtils.hasText(certContextData) && (certificate = WeChatPayUtils.loadCertificate(new ByteArrayInputStream(certContextData.getBytes())))!=null){
                 platformCert.put(certData.getSerialNo(),certificate);
             }
-            if(flag){
-                certInfo.setLatestUsing(certData);
-                flag =false;
-            }
-        }));
-
+        });
+        certInfo.setLatestUsing(findNewest(certDataList));
     }
+
+    private PlatformCertData findNewest(List<PlatformCertData> certDataList){
+        certDataList.sort(((o1, o2) -> {
+            /** 排序规则默认升序,i.e o1>o2返回1,则在list中,o1排在o2后面,所以若希望以第一个为主,则设置o1>o2返回-1 */
+            int res = o1.getEffectiveTime().isAfter(o2.getEffectiveTime()) ? -1:1;
+            return res;
+        }));
+        return certDataList.get(0);
+    }
+
 
 
 }

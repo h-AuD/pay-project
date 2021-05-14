@@ -26,13 +26,21 @@ import java.io.IOException;
 @Component
 public class SignatureVerifyFilter extends OncePerRequestFilter {
 
+    private String[] urls = {"/back/pay"};
+
     @Autowired
     private WeChatCertInfo certInfo;
 
     /** 设置需要拦截的请求,目前设置拦截回调接口(i.e,this app api) */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return super.shouldNotFilter(request);
+        String requestURI = request.getRequestURI();
+        for(String url: urls){
+            if(requestURI.equals(url)){
+                return false;
+            }
+        }
+        return true;
     }
 
     /** 拦截,微信支付验签 */
@@ -53,7 +61,9 @@ public class SignatureVerifyFilter extends OncePerRequestFilter {
         if(verify){
             filterChain.doFilter(request,response);
         }else {
-            response.sendError(500);
+            /** 认证失败 === 也包括证书替换时导致的失败 */
+            //response.sendError(401);
+            request.getRequestDispatcher("/error/signature/fail").forward(request,response);
         }
     }
 

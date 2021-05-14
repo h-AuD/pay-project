@@ -16,6 +16,7 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -87,7 +88,7 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
     public void flushCert(){
         try {
             // 尝试获取锁,获取不到,直接走人
-           if(lock.tryLock()){
+           if(lock.tryLock(5,TimeUnit.SECONDS)){
                flushPlatformCert.flushCert();
            }else {
                return;
