@@ -51,7 +51,7 @@ public class FlushPlatformCert {
         Map<String, X509Certificate> platformCert = certInfo.getPlatformCert();
         final List<PlatformCertData> certDataList = resultData.getData();
         certDataList.stream().sorted((o1,o2)->{
-            int res = o1.getEffectiveTime().isAfter(o2.getEffectiveTime()) ? 1:-1;
+            int res = o1.getEffectiveTime().isAfter(o2.getEffectiveTime()) ? -1:1;
             return res;
         }).forEach((certData -> {
             final String certContextData = WeChatPayUtils.decryptCertAndCallBody(certData.getEncryptCertificate());
@@ -61,7 +61,7 @@ public class FlushPlatformCert {
                 platformCert.put(certData.getSerialNo(),certificate);
             }
             if(flag){
-                certInfo.setLatestUsing(certDataList.get(0));
+                certInfo.setLatestUsing(certData);
                 flag =false;
             }
         }));

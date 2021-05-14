@@ -43,13 +43,17 @@ public class SignatureVerifyFilter extends OncePerRequestFilter {
         if(!certInfo.isExistKey(serial)){
             /* =========================================================================
              * TODO 遗留问题:并发情况如何处理?eg.当证书即将过期,并且多个回调同时 come in
-             * 在 flushCert 方法中采取tryLock方式,即希望刷新证书发送一次,对于没有机会的
+             * 在 flushCert 方法中采取tryLock方式
+             * 即希望刷新证书操作执行一次,对于没有机会的刷新的请求直接放行,
+             * 但是会导致接下来的verify失败 === TODO new problem
              * =========================================================================*/
             certInfo.flushCert();
         }
         final boolean verify = WeChatPaySignatureHandle.verifyWeChatResponse(buildParam(request),null);
         if(verify){
             filterChain.doFilter(request,response);
+        }else {
+            response.sendError(500);
         }
     }
 

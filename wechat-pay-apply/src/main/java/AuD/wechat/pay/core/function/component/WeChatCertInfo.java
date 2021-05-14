@@ -86,7 +86,7 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
     /** 刷新平台证书,有并发影响,建议处理 */
     public void flushCert(){
         try {
-            // 尝试获取锁,获取不到,直接走人 TODO 待验证
+            // 尝试获取锁,获取不到,直接走人
            if(lock.tryLock()){
                flushPlatformCert.flushCert();
            }else {
