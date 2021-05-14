@@ -1,8 +1,9 @@
-package AuD.wechat.pay.core.function;
+package AuD.wechat.pay.core.function.component;
 
 import AuD.wechat.pay.api.AcquirePlatformCert;
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
 import AuD.wechat.pay.core.constant.WeChatPayApiList;
+import AuD.wechat.pay.core.function.WeChatPaySignatureHandle;
 import AuD.wechat.pay.core.function.model.SignatureInfoModel;
 import AuD.wechat.pay.core.function.component.WeChatCertInfo;
 import AuD.wechat.pay.core.util.WeChatPayUtils;

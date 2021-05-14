@@ -16,7 +16,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 /**
- * Description: 微信回调请求过滤器
+ * Description: 微信回调请求过滤器,可用于验签
  *
  * @author AuD/胡钊
  * @ClassName WeChatCallBackAuthVerifyFilter
@@ -24,7 +24,7 @@ import java.io.IOException;
  * @Version 1.0
  */
 @Component
-public class WeChatCallBackAuthVerifyFilter extends OncePerRequestFilter {
+public class SignatureVerifyFilter extends OncePerRequestFilter {
 
     @Autowired
     private WeChatCertInfo certInfo;
@@ -35,13 +35,17 @@ public class WeChatCallBackAuthVerifyFilter extends OncePerRequestFilter {
         return super.shouldNotFilter(request);
     }
 
-    /** 拦截 */
+    /** 拦截,微信支付验签 */
     @Override
     protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         final String serial = request.getHeader(SignatureAuthConstant.WCP_SERIAL);
-        // 商户是否拥有该证书   TODO 待续.... 遗留问题:并发情况如何处理?eg.多个回调 & 幂等性
+        // 商户是否拥有该证书
         if(!certInfo.isExistKey(serial)){
-            //certInfo.flushCert();
+            /* =========================================================================
+             * TODO 遗留问题:并发情况如何处理?eg.当证书即将过期,并且多个回调同时 come in
+             *
+             * =========================================================================*/
+            certInfo.flushCert();
         }
         final boolean verify = WeChatPaySignatureHandle.verifyWeChatResponse(buildParam(request),null);
         if(verify){

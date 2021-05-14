@@ -1,7 +1,6 @@
 package AuD.wechat.pay.core.function.component;
 
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
-import AuD.wechat.pay.core.function.FlushPlatformCert;
 import AuD.wechat.pay.core.util.WeChatPayUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -15,14 +14,18 @@ import org.springframework.stereotype.Component;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Map;
-import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Description: 用于存储微信支付需要的商户证书和平台证书相关的信息 === 相当于一个存储容器
  *
- * 设计this-class是因为,每次call微信支付相关API(i.e. 统一下单接口)或者验证微信支付回调签名或者敏感信息加解密时,
- * 需要用到PrivateKey & X509Certificate,而这2个需要通过读取文件或者文本来获取,
- * 考虑到上述2个可变频率不大的情况下,没有必要频繁读取文件/文本 === i.e 商户API证书是不可变的,如果遗失或者泄漏,只能重新申请.
+ * - 设计this-class是因为,每次call微信支付相关API(eg.统一下单接口)或者验证微信支付回调签名或者敏感信息加解密时,
+ * - 需要用到PrivateKey & X509Certificate,而这2个需要通过读取文件或者文本来获取,
+ * - 考虑到上述2个对象可变频率不大的情况下,没有必要频繁读取文件/文本 === i.e 商户API证书是不可变的,如果遗失或者泄漏,只能重新申请.
+ *
+ * 实现{@link ApplicationContextAware}是为了在生成apiPrivateKey时出现错误时,让APP exit.
+ * 实现{@link InitializingBean} 是为了初始化证书对象
+ * ====> 有了上述基础,this class 便扮演了一个"证书容器"角色.
  *
  * @author AuD/胡钊
  * @ClassName WeChatCertInfo
@@ -32,6 +35,7 @@ import java.util.Optional;
 @Component
 @Slf4j
 public class WeChatCertInfo implements ApplicationContextAware,InitializingBean {
+
     /** 商户API私钥,存在于商户API证书中,用于签名 */
     private PrivateKey apiPrivateKey;
     /** 用于存储平台证书,其中key为serialNo(证书序列号) === 使用 ConcurrentHashMap */
@@ -39,6 +43,9 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
 
     private ApplicationContext applicationContext;
 
+    private final static ReentrantLock lock = new ReentrantLock();  // 同步锁
+
+    /** 刷新平台证书实际执行者,即刷新的操作委托给 {@link FlushPlatformCert} */
     @Autowired
     private FlushPlatformCert flushPlatformCert;
 
@@ -46,7 +53,7 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
         return apiPrivateKey;
     }
 
-    /** 判断this serialNo 是否存在 */
+    /** 判断 this serialNo 是否存在 */
     public boolean isExistKey(String serialNo){
         return platformCert.containsKey(serialNo);
     }
@@ -56,8 +63,23 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
         return platformCert.get(serialNo);
     }
 
+    /** 刷新平台证书,有并发影响,建议处理 */
     public void flushCert(){
-        this.platformCert = flushPlatformCert.flushCert();
+        try {
+            // 尝试获取锁,获取不到,直接走人 TODO 待验证
+           if(lock.tryLock()){
+               this.platformCert = flushPlatformCert.flushCert();
+           }else {
+               return;
+           }
+        }catch (Exception e){
+
+        }finally {
+            if(lock.isHeldByCurrentThread()){
+                lock.unlock();
+            }
+        }
+
     }
 
     @Override
@@ -67,6 +89,7 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
             log.error("商户API证书密钥获取失败,应用退出");
             SpringApplication.exit(applicationContext); // 应用退出
         }
+        this.apiPrivateKey = privateKey;
         platformCert = flushPlatformCert.flushCert();
     }
 
