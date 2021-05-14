@@ -3,6 +3,7 @@ package AuD.wechat.pay.core.function.model;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
+import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 
 /**
@@ -16,8 +17,6 @@ import java.time.LocalDateTime;
 @Data
 public class PlatformCertData {
 
-    /** 解密后的证书内容 */
-    private String certContext;
     @JSONField(name = "serial_no")
     private String serialNo;
     @JSONField(name = "effective_time")
@@ -26,5 +25,7 @@ public class PlatformCertData {
     private LocalDateTime expireTime;
     @JSONField(name = "encrypt_certificate")
     private EncryptData encryptCertificate;
+    /** 平台证书对象 */
+    private X509Certificate certificate;
 
 }

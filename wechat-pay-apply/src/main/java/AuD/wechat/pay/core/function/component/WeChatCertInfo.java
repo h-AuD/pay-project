@@ -1,6 +1,7 @@
 package AuD.wechat.pay.core.function.component;
 
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
+import AuD.wechat.pay.core.function.model.PlatformCertData;
 import AuD.wechat.pay.core.util.WeChatPayUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -39,11 +41,13 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
     /** 商户API私钥,存在于商户API证书中,用于签名 */
     private PrivateKey apiPrivateKey;
     /** 用于存储平台证书,其中key为serialNo(证书序列号) === 使用 ConcurrentHashMap */
-    private Map<String, X509Certificate> platformCert;
-
-    private ApplicationContext applicationContext;
+    private Map<String, X509Certificate> platformCert = new ConcurrentHashMap<>();
+    /** 表示最近启用的平台证书 == 加密请求消息中的敏感信息时,使用最新的平台证书 */
+    private PlatformCertData latestUsing;
 
     private final static ReentrantLock lock = new ReentrantLock();  // 同步锁
+
+    private ApplicationContext applicationContext;
 
     /** 刷新平台证书实际执行者,即刷新的操作委托给 {@link FlushPlatformCert} */
     @Autowired
@@ -51,6 +55,22 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
 
     public PrivateKey getApiPrivateKey() {
         return apiPrivateKey;
+    }
+
+    public void setPlatformCert(Map<String, X509Certificate> platformCert){
+        this.platformCert = platformCert;
+    }
+
+    public Map<String, X509Certificate> getPlatformCert(){
+        return this.platformCert;
+    }
+
+    public PlatformCertData getLatestUsing() {
+        return latestUsing;
+    }
+
+    public void setLatestUsing(PlatformCertData latestUsing) {
+        this.latestUsing = latestUsing;
     }
 
     /** 判断 this serialNo 是否存在 */
@@ -68,7 +88,7 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
         try {
             // 尝试获取锁,获取不到,直接走人 TODO 待验证
            if(lock.tryLock()){
-               this.platformCert = flushPlatformCert.flushCert();
+               flushPlatformCert.flushCert();
            }else {
                return;
            }
@@ -90,7 +110,7 @@ public class WeChatCertInfo implements ApplicationContextAware,InitializingBean 
             SpringApplication.exit(applicationContext); // 应用退出
         }
         this.apiPrivateKey = privateKey;
-        platformCert = flushPlatformCert.flushCert();
+        flushPlatformCert.flushCert();
     }
 
     @Override
