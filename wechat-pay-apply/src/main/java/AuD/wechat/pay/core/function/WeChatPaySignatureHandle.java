@@ -1,5 +1,6 @@
-package AuD.wechat.pay.core.function.auth;
+package AuD.wechat.pay.core.function;
 
+import AuD.wechat.pay.core.function.model.SignatureInfoModel;
 import AuD.wechat.pay.core.util.WeChatPayUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -11,18 +12,18 @@ import java.security.cert.X509Certificate;
  * Description: 调用微信支付API时,所需要的认证相关操作。
  * 1.签名 - signature
  * - 构造签名串
- * {@link WeChatPayAuthHandle#evalReqSignature(AuD.wechat.pay.core.function.auth.SignatureInfoModel, java.security.PrivateKey)}
+ * {@link WeChatPaySignatureHandle#evalReqSignature(SignatureInfoModel, java.security.PrivateKey)}
  * - 构建请求头中的签名信息
- * {@link WeChatPayAuthHandle#buildAuthorization(AuD.wechat.pay.core.function.auth.SignatureInfoModel, java.security.PrivateKey)}
+ * {@link WeChatPaySignatureHandle#buildAuthorization(SignatureInfoModel, java.security.PrivateKey)}
  * -
  * -- 验证微信端应答签名
  * @author AuD/胡钊
- * @ClassName WeChatPayAuthHandle
+ * @ClassName WeChatPaySignatureHandle
  * @date 2021/5/11 15:56
  * @Version 1.0
  */
 @Slf4j
-public class WeChatPayAuthHandle {
+public class WeChatPaySignatureHandle {
 
     /** 换行符 */
     private final static String NEW_LINE = "\n";

@@ -1,4 +1,4 @@
-package AuD.wechat.pay.core.model;
+package AuD.wechat.pay.core.function.model;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;

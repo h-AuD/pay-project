@@ -1,7 +1,7 @@
 package AuD.wechat.pay.core.util;
 
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
-import AuD.wechat.pay.core.model.EncryptData;
+import AuD.wechat.pay.core.function.model.EncryptData;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Cipher;

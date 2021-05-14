@@ -1,12 +1,13 @@
-package AuD.wechat.pay.core.function.auth;
+package AuD.wechat.pay.core.function.model;
 
 import AuD.component.common.utils.RandomStrUtil;
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
+import AuD.wechat.pay.core.function.WeChatPaySignatureHandle;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 /**
- * Description: 微信签名信息模型
+ * Description: 微信签名信息模型 === 主要用于方便传参
  *
  * @author AuD/胡钊
  * @ClassName SignatureInfoModel
@@ -47,7 +48,7 @@ public class SignatureInfoModel {
 
     /**
      * mchId & serialNo 属于常量,传入这2个参数,仅仅为了方便构建API请求体的认证信息
-     * 即,若想要构建Authorization信息,使用 {@link WeChatPayAuthHandle#buildAuthorization(AuD.wechat.pay.core.function.auth.SignatureInfoModel, java.security.PrivateKey)}
+     * 即,若想要构建Authorization信息,使用 {@link WeChatPaySignatureHandle#buildAuthorization(SignatureInfoModel, java.security.PrivateKey)}
      *
      * @return
      */

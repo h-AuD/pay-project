@@ -1,7 +1,7 @@
 package AuD.wechat.pay.core.function.filter;
 
-import AuD.wechat.pay.core.function.auth.SignatureInfoModel;
-import AuD.wechat.pay.core.function.auth.WeChatPayAuthHandle;
+import AuD.wechat.pay.core.function.WeChatPaySignatureHandle;
+import AuD.wechat.pay.core.function.model.SignatureInfoModel;
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
 import AuD.wechat.pay.core.function.component.WeChatCertInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,7 @@ public class WeChatCallBackAuthVerifyFilter extends OncePerRequestFilter {
         if(!certInfo.isExistKey(serial)){
             //certInfo.flushCert();
         }
-        final boolean verify = WeChatPayAuthHandle.verifyWeChatResponse(buildParam(request),null);
+        final boolean verify = WeChatPaySignatureHandle.verifyWeChatResponse(buildParam(request),null);
         if(verify){
             filterChain.doFilter(request,response);
         }
