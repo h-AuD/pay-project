@@ -1,5 +1,6 @@
 package AuD.wechat.pay.core.function.filter;
 
+import AuD.wechat.pay.core.constant.DispatcherUri;
 import AuD.wechat.pay.core.function.WeChatPaySignatureHandle;
 import AuD.wechat.pay.core.function.model.SignatureInfoModel;
 import AuD.wechat.pay.core.constant.SignatureAuthConstant;
@@ -63,7 +64,7 @@ public class SignatureVerifyFilter extends OncePerRequestFilter {
         }else {
             /** 认证失败 === 也包括证书替换时导致的失败 */
             //response.sendError(401);
-            request.getRequestDispatcher("/error/signature/fail").forward(request,response);
+            request.getRequestDispatcher(DispatcherUri.SIGNATURE_FAIL).forward(request,response);
         }
     }
 
